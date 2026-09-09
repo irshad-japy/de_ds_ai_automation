@@ -13,7 +13,6 @@ from common.auth import get_token_credential
 from common.config import Settings
 from ingestion.events.schema import validate_event
 
-
 def build_consumer() -> EventHubConsumerClient:
     s = Settings()
     if s.eventhub_connection_string:
@@ -28,7 +27,6 @@ def build_consumer() -> EventHubConsumerClient:
         consumer_group=s.eventhub_consumer_group,
         credential=get_token_credential(),
     )
-
 
 def main() -> None:
     parser = argparse.ArgumentParser()

@@ -365,53 +365,29 @@ POC_05_FOUNDRY_RAG_AI_SEARCH_PROJECT/
 
 ---
 
-## 11. Create and activate a virtual environment
+## 11. Use the one-click Python toolchain setup
 
-From the project root:
+This project includes a ready-made bootstrap under `python_toolchain_one_click`.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-If PowerShell blocks activation, either use Command Prompt:
-
-```cmd
-.venv\Scripts\activate.bat
-```
-
-or allow scripts only for the current PowerShell process:
+### Windows
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
+cd .\python_toolchain_one_click\windows
+./setup_venv_poery.bat
 ```
 
-Verify:
+### macOS / Linux
 
-```powershell
-python --version
-where.exe python
+```bash
+cd ./python_toolchain_one_click/unix
+bash ./setup_venv_poery.sh
 ```
+
+The script configures Poetry, creates the project-local environment, selects Python 3.12, installs the dependencies, and runs the project verification checks. This is the recommended setup path for this POC and replaces the manual `python -m venv` flow.
 
 ---
 
-## 12. Install packages
-
-```powershell
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-Verify:
-
-```powershell
-python -c "import azure.search.documents, fastapi, openai; print('Dependencies OK')"
-```
-
----
-
-## 13. Create `.env`
+## 12. Create `.env`
 
 Copy the template:
 
@@ -796,22 +772,20 @@ After Azure resources are manually created:
 
 ```powershell
 cd POC_05_FOUNDRY_RAG_AI_SEARCH_PROJECT
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+cd .\python_toolchain_one_click\windows
+./setup_venv_poery.bat
 Copy-Item .env.example .env
 # Edit .env now
-python scripts/verify_config.py
-python -m pytest -q
-python -m rag.ingest
-python -m rag.retrieve --mode vector --query "What is the return window for damaged items?"
-python -m rag.retrieve --mode hybrid --query "What is the return window for damaged items?"
-python -m rag.ask --query "What is the return window for damaged items?"
-python -m eval.run_eval
-python -m eval.failure_tests
-python scripts/smoke_test.py
-uvicorn rag.app:app --reload --host 127.0.0.1 --port 8000
+poetry run python scripts/verify_config.py
+poetry run python -m pytest -q
+poetry run python -m rag.ingest
+poetry run python -m rag.retrieve --mode vector --query "What is the return window for damaged items?"
+poetry run python -m rag.retrieve --mode hybrid --query "What is the return window for damaged items?"
+poetry run python -m rag.ask --query "What is the return window for damaged items?"
+poetry run python -m eval.run_eval
+poetry run python -m eval.failure_tests
+poetry run python scripts/smoke_test.py
+poetry run uvicorn rag.app:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ---

@@ -1,8 +1,0 @@
-subscription_id     = "00000000-0000-0000-0000-000000000000"
-location            = "eastus"
-resource_group_name = "rg-poc08-capstone"
-project_name        = "poc08capstone"
-search_sku          = "free"
-deploy_eventhub     = true
-deploy_search       = true
-deploy_databricks   = false

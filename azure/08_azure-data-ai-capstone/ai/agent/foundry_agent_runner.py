@@ -7,7 +7,6 @@ from azure.ai.projects import AIProjectClient
 from common.auth import get_token_credential
 from common.config import Settings
 
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("question", nargs="?", default="What is the return policy?")
@@ -21,7 +20,6 @@ def main() -> None:
     print(response.output_text)
     if response.model_extra:
         print("agent_session_id:", response.model_extra.get("agent_session_id"))
-
 
 if __name__ == "__main__":
     main()

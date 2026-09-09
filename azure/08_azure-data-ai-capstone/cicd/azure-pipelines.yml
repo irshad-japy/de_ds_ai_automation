@@ -4,11 +4,13 @@ trigger:
 variables:
   pythonVersion: '3.12'
   ENABLE_DEPLOY: 'false'
+  POC08_LOCATION: 'eastus'
 
 stages:
 - stage: Validate
+  displayName: Validate Python and Bicep
   jobs:
-  - job: PythonAndIaC
+  - job: PythonAndBicep
     pool:
       vmImage: ubuntu-latest
     steps:
@@ -26,26 +28,18 @@ stages:
       displayName: Validate Python and run tests
 
     - script: |
-        terraform -chdir=infra/terraform fmt -check -recursive
-        terraform -chdir=infra/terraform init -backend=false
-        terraform -chdir=infra/terraform validate
-      displayName: Validate Terraform
-
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: 'POC08-SERVICE-CONNECTION'
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
-          az bicep build --file infra/bicep/main.bicep
-      displayName: Validate Bicep
-      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+        az bicep install
+        az bicep version
+        az bicep build --file infra/bicep/main.bicep
+        az bicep build-params --file infra/bicep/main.bicepparam
+      displayName: Compile Bicep and parameter file
 
 - stage: Deploy
+  displayName: Explicit Bicep deployment
   dependsOn: Validate
   condition: and(succeeded(), eq(variables['ENABLE_DEPLOY'], 'true'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   jobs:
-  - deployment: TerraformApply
+  - deployment: BicepDeploy
     environment: poc08-lab
     strategy:
       runOnce:
@@ -58,8 +52,19 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
-                export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
-                terraform -chdir=infra/terraform init
-                terraform -chdir=infra/terraform apply -auto-approve \
-                  -var="subscription_id=$ARM_SUBSCRIPTION_ID"
-            displayName: Explicitly enabled Terraform deploy
+                set -euo pipefail
+                export POC08_LOCATION="$(POC08_LOCATION)"
+                DEPLOYMENT_NAME="poc08-cicd-$(Build.BuildId)"
+
+                az deployment sub validate \
+                  --location "$POC08_LOCATION" \
+                  --parameters infra/bicep/main.bicepparam \
+                  --no-prompt true \
+                  --name "$DEPLOYMENT_NAME-validate"
+
+                az deployment sub create \
+                  --location "$POC08_LOCATION" \
+                  --parameters infra/bicep/main.bicepparam \
+                  --no-prompt true \
+                  --name "$DEPLOYMENT_NAME"
+            displayName: Deploy Bicep only when ENABLE_DEPLOY=true

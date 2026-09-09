@@ -15,10 +15,8 @@ PROFILES = {
     "foundry": ["FOUNDRY_PROJECT_ENDPOINT", "FOUNDRY_MODEL_DEPLOYMENT"],
 }
 
-
 def present(name: str) -> bool:
     return bool(env(name))
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -55,7 +53,6 @@ def main() -> int:
         return 2
     print("\n[SUCCESS] Configuration check passed for selected profile(s).")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

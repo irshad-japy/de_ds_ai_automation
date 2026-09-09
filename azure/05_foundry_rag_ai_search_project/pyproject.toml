@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "05-foundry-rag-ai-search-project"
+version = "0.1.0"
+description = "POC-05 Azure AI Foundry RAG with Azure AI Search"
+authors = ["POC Learner <learner@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+azure-search-documents = ">=11.6.0"
+azure-core = ">=1.30.0"
+azure-identity = ">=1.19.0"
+azure-monitor-opentelemetry = ">=1.6.0"
+openai = ">=1.0.0"
+fastapi = ">=0.115.0"
+uvicorn = { version = ">=0.30.0", extras = ["standard"] }
+python-dotenv = ">=1.0.1"
+pydantic = ">=2.8.0"
+PyYAML = ">=6.0.1"
+tiktoken = ">=0.8.0"
+pytest = ">=8.0.0"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

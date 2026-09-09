@@ -180,7 +180,27 @@ These extra fields allow the semantic model to demonstrate revenue and fulfillme
 
 ---
 
-# 7. Execute the POC in this exact order
+## 7. Use the one-click project setup before the Azure steps
+
+This POC includes a ready-to-use Python toolchain bootstrap in the `python_toolchain_one_click` folder.
+
+### Windows
+
+```powershell
+cd .\python_toolchain_one_click\windows
+./setup_venv_poery.bat
+```
+
+### macOS / Linux
+
+```bash
+cd ./python_toolchain_one_click/unix
+bash ./setup_venv_poery.sh
+```
+
+The script sets Poetry to create the environment inside the project folder, selects Python 3.12, installs dependencies, and runs the local validation flow. Follow this setup path instead of manually creating a virtual environment with `python -m venv .venv`.
+
+---
 
 ## PHASE 1 — Create Azure resources manually
 
@@ -203,17 +223,15 @@ Do not create Databricks/Synapse yet if you want the easiest debugging path.
 
 ### Windows Command Prompt
 
-From this project root:
+Run the project bootstrap first so the environment is created correctly:
 
 ```bat
-python -m venv .venv
-.venv\Scripts\activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+cd .\python_toolchain_one_click\windows
+setup_venv_poery.bat
 copy .env.example .env
 ```
 
-Open `.env` and set:
+The script manages the Poetry environment, selects Python 3.12, and installs dependencies. After that, open `.env` and set:
 
 ```text
 EVENT_HUB_CONNECTION_STRING=<your real connection string>

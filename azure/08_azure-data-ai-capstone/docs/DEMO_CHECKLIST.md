@@ -8,7 +8,7 @@
 6. **Assistant** — run policy, metric, and mixed questions; show citations/tool source.
 7. **Monitoring** — show `monitoring/checklist.md`, logs or Foundry trace.
 8. **Security** — show `security/rbac_matrix.md` and explain read-only agent tools.
-9. **Cleanup** — show Cost Management / Terraform destroy plan.
+9. **Cleanup** — show Cost Management / Bicep resource-group cleanup plan.
 
 Interview story:
 

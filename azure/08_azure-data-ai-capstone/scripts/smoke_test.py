@@ -5,7 +5,6 @@ from pathlib import Path
 
 from lakehouse.local_medallion import run_pipeline
 
-
 def main() -> int:
     orders = Path("data/synthetic/orders_001.csv")
     if not orders.exists():
@@ -16,7 +15,6 @@ def main() -> int:
     print(json.dumps(summary, indent=2))
     print("[SUCCESS] Local batch -> Bronze -> Silver -> Gold smoke test passed.")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

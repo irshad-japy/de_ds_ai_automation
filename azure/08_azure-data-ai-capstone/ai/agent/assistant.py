@@ -9,7 +9,6 @@ from ai.rag.query_search import retrieve
 from common.auth import get_token_credential
 from common.config import Settings
 
-
 def build_tool_context(mode: str, question: str) -> str:
     parts = []
     if mode in {"policy", "mixed"}:
@@ -20,7 +19,6 @@ def build_tool_context(mode: str, question: str) -> str:
     if mode in {"metric", "mixed"}:
         parts.append("METRIC TOOL (read-only Gold data):\n" + supported_metric_answer(question))
     return "\n\n".join(parts)
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Constrained read-only Data + AI Assistant")

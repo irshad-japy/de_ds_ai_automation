@@ -158,22 +158,27 @@ az account show -o table
 
 ---
 
-## 6. Create the local Python environment
+## 6. Use the one-click Python toolchain setup
 
-From this project root:
+This project includes a ready-to-use setup script in the `python_toolchain_one_click` folder. Use that instead of manually creating a virtual environment.
+
+### Windows
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+cd .\python_toolchain_one_click\windows
+./setup_venv_poery.bat
 ```
 
-If PowerShell blocks activation, you can use Command Prompt:
+### macOS / Linux
 
-```bat
-.venv\Scripts\activate.bat
+```bash
+cd ./python_toolchain_one_click/unix
+bash ./setup_venv_poery.sh
 ```
+
+The script configures Poetry for an in-project environment, selects Python 3.12, installs dependencies, and runs the project verification checks. This is the recommended setup workflow for this POC.
+
+> Do not manually run `python -m venv .venv` unless you intentionally want a custom environment for troubleshooting.
 
 ---
 

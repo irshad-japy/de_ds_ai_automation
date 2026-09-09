@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pandas as pd
 
+from common.config import env
 
 def main() -> None:
     try:
@@ -12,12 +12,19 @@ def main() -> None:
     except ImportError as exc:
         raise RuntimeError("Run: poetry install --with sql") from exc
 
-    conn_str = os.getenv("AZURE_SQL_ODBC_CONNECTION_STRING", "").strip()
+    conn_str = env("AZURE_SQL_ODBC_CONNECTION_STRING")
     if not conn_str:
         raise RuntimeError("Set AZURE_SQL_ODBC_CONNECTION_STRING in .env")
+
+    schema_sql = Path("serving/sql/schema.sql").read_text(encoding="utf-8")
     frame = pd.read_csv(Path("output/gold/customer_metrics.csv"))
+
     with pyodbc.connect(conn_str) as conn:
         cur = conn.cursor()
+        for batch in [part.strip() for part in schema_sql.replace('\r\n', '\n').split('\nGO\n') if part.strip()]:
+            cur.execute(batch)
+        conn.commit()
+
         for row in frame.itertuples(index=False):
             cur.execute(
                 """

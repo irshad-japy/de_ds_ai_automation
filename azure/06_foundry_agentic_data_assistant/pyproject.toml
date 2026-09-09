@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "06-foundry-agentic-data-assistant"
+version = "0.1.0"
+description = "POC-06 Azure AI Foundry Agentic Data Assistant"
+authors = ["POC Learner <learner@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+azure-ai-projects = ">=2.3.0,<2.4.0"
+azure-identity = ">=1.17.0"
+azure-search-documents = ">=11.6.0"
+azure-monitor-opentelemetry = ">=1.6.0"
+openai = ">=1.0.0"
+python-dotenv = ">=1.0.1"
+requests = ">=2.32.0"
+pytest = ">=8.0.0"
+azure-functions = ">=1.20.0"
+pyodbc = ">=5.1.0"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

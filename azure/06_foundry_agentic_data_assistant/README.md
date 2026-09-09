@@ -136,16 +136,25 @@ func --version
 
 > `azure-identity` is a Python library. It does **not** install the `az` command. If `az` is not recognized, install Azure CLI separately.
 
-## 5. Create virtual environment
+## 5. Use the one-click Python toolchain setup
 
-From the project root:
+This project includes a ready-made bootstrap script in `python_toolchain_one_click`.
+
+### Windows
 
 ```bat
-python -m venv .venv
-.venv\Scripts\activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+cd .\python_toolchain_one_click\windows
+setup_venv_poery.bat
 ```
+
+### macOS / Linux
+
+```bash
+cd ./python_toolchain_one_click/unix
+bash ./setup_venv_poery.sh
+```
+
+The script configures Poetry, uses Python 3.12, installs the package dependencies, and runs the initial local checks. This is the preferred setup method for this POC instead of manual `python -m venv` creation.
 
 ## 6. Run the safe tools without Azure
 

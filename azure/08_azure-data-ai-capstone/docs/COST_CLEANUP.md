@@ -1,12 +1,53 @@
 # Cost cleanup
 
-At the end of the lab:
+POC-08 is a lab. Several services can incur ongoing charges even when you are not actively testing.
 
-1. Terminate Databricks compute.
-2. Stop/delete Azure ML compute or online endpoints used by POC-07 if no longer needed.
-3. Delete temporary Foundry model deployments if they incur cost and are not reused.
-4. Delete Event Hubs if the lab is complete.
-5. Delete paid Azure AI Search if it was created only for this POC.
-6. Remove temporary SQL/Synapse/Fabric resources that are not part of another POC.
-7. If everything was created in the dedicated Terraform resource group, run `terraform destroy` or delete the resource group after verifying no shared resources are inside it.
-8. Open Cost Management and verify that no unexpected lab resources remain.
+## Bicep edition cleanup
+
+The Bicep deployment places the lab resources in one dedicated resource group by default:
+
+```text
+rg-poc08-capstone
+```
+
+From the project root:
+
+```powershell
+.\infra\bicep\destroy_bicep.ps1 -ResourceGroupName rg-poc08-capstone
+```
+
+Type `DELETE` when prompted.
+
+Or use Azure CLI directly:
+
+```powershell
+az group delete --name rg-poc08-capstone --yes
+```
+
+Verify:
+
+```powershell
+az group exists --name rg-poc08-capstone
+```
+
+Expected after deletion completes:
+
+```text
+false
+```
+
+## Services to pay special attention to
+
+If enabled, make sure these are stopped/deleted when the lab is complete:
+
+- Azure Databricks clusters/workspace;
+- Azure Synapse resources;
+- Azure Machine Learning compute/endpoints;
+- Azure SQL Database;
+- Event Hubs namespace;
+- paid Azure AI Search tier;
+- Microsoft Foundry model deployments;
+- Function App/hosting resources;
+- any separately created resources reused from earlier POCs.
+
+Also check Azure Cost Management after cleanup. Deleting the POC-08 resource group does **not** delete resources from previous POCs that you chose to reuse.

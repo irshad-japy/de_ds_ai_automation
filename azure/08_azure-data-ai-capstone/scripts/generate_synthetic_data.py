@@ -40,7 +40,6 @@ EVENTS = [
     {"event_id": "E-003", "order_id": "O-1003", "status": "PICKED_UP", "event_time": "2026-09-06T08:10:00Z", "location": "Pune"},
 ]
 
-
 def main() -> None:
     out = Path("data/synthetic")
     out.mkdir(parents=True, exist_ok=True)

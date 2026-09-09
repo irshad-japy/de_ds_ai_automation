@@ -111,39 +111,47 @@ The included `poetry.toml` sets `virtualenvs.in-project = true`, so Poetry creat
 POC_07_AZURE_ML_MLFLOW_LLMOPS_PROJECT\.venv
 ```
 
-## Step 2.1 — Open CMD in the project folder and verify Poetry
+## Step 2.1 — Use the one-click Python toolchain bootstrap
+
+This project includes a ready-made project setup script under `python_toolchain_one_click`.
+
+### Windows
 
 ```bat
 cd C:\path\to\POC_07_AZURE_ML_MLFLOW_LLMOPS_PROJECT
-poetry --version
-py -3.12 --version
+cd .\python_toolchain_one_click\windows
+setup_venv_poery.bat
 ```
+
+### macOS / Linux
+
+```bash
+cd ./python_toolchain_one_click/unix
+bash ./setup_venv_poery.sh
+```
+
+The script configures Poetry to use a project-local virtual environment, targets Python 3.12, installs all dependencies from `pyproject.toml`, and runs the local verification checks. This is the recommended setup path and replaces the manual `python -m venv` flow.
 
 Expected:
 
 ```text
-Poetry (version ...)
+Poetry environment created successfully.
 Python 3.12.x
 ```
 
-If `poetry` is not recognized, install Poetry first and reopen CMD/PowerShell. This POC expects **Python 3.12**.
-
-## Step 2.2 — Tell Poetry to use Python 3.12
-
-```bat
-poetry env use 3.12
-```
-
-Verify which environment Poetry selected:
+## Step 2.2 — Verify the Poetry environment
 
 ```bat
 poetry env info
 poetry env info --path
+poetry run python --version
 ```
 
 Because `poetry.toml` is included, the path should point to this project's `.venv` folder. On the first successful `poetry install`, Poetry will also create `poetry.lock`; keep that lock file for reproducible future installs.
 
 ## Step 2.3 — Install all POC dependencies from `pyproject.toml`
+
+If you used the one-click script, dependencies are already installed. Otherwise, use:
 
 ```bat
 poetry install

@@ -5,10 +5,15 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 output/
-.terraform/
-*.tfstate
-*.tfstate.*
-.terraform.lock.hcl
-crash.log
 .DS_Store
 .vscode/settings.json
+
+# Bicep generated/local deployment artifacts
+infra/bicep/main.json
+infra/bicep/*.parameters.json
+infra/bicep/deployment-outputs.json
+
+# Function packaging/local zips
+*.zip
+
+infra/bicep/last-deployment.txt

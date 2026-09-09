@@ -1,6 +1,6 @@
-# POC-08 — Integrated Azure Data + AI Capstone (Poetry Edition)
+# POC-08 — Integrated Azure Data + AI Capstone (Azure Bicep + Poetry Edition)
 
-This repository implements the capstone described in `POC_08_CAPSTONE_DATA_AI_PLATFORM.md`: batch + streaming ingestion, ADLS, Databricks Medallion processing, analytical serving, Document Intelligence, Azure AI Search, Microsoft Foundry RAG/agent integration, optional POC-07 ML scoring, security, monitoring, IaC, CI/CD, failure drills and cost cleanup.
+This repository implements the capstone described in `POC_08_CAPSTONE_DATA_AI_PLATFORM.md` and now uses **Azure Bicep as the primary infrastructure-as-code path**: batch + streaming ingestion, ADLS, Databricks Medallion processing, analytical serving, Document Intelligence, Azure AI Search, Microsoft Foundry RAG/agent integration, optional POC-07 ML scoring, security, monitoring, IaC, CI/CD, failure drills and cost cleanup.
 
 The project is deliberately **beginner-first**. Prove the flow locally, then connect Azure services one at a time.
 
@@ -25,7 +25,7 @@ By the end of the POC you should be able to demonstrate:
 ## 2. Project structure
 
 ```text
-azure-data-ai-capstone-poetry/
+azure-data-ai-capstone-bicep/
 ├── README.md
 ├── pyproject.toml
 ├── .env.example
@@ -94,8 +94,17 @@ azure-data-ai-capstone-poetry/
 │   ├── health_check.py
 │   └── queries/poc08_health.kql
 ├── infra/
-│   ├── terraform/
 │   └── bicep/
+│       ├── main.bicep
+│       ├── main.bicepparam
+│       ├── main.full.bicepparam
+│       ├── main.models.bicepparam
+│       ├── modules/
+│       ├── deploy_bicep.ps1
+│       ├── deploy_and_run_beginner.ps1
+│       ├── deploy_full.cmd
+│       ├── deploy_models.cmd
+│       └── run_after_bicep.ps1
 ├── cicd/azure-pipelines.yml
 ├── scripts/
 │   ├── bootstrap.ps1
@@ -104,6 +113,10 @@ azure-data-ai-capstone-poetry/
 │   └── smoke_test.py
 ├── docs/
 │   ├── POETRY_WINDOWS_GUIDE.md
+│   ├── BICEP_QUICKSTART_WINDOWS.md
+│   ├── BICEP_DEPLOYMENT_GUIDE.md
+│   ├── BICEP_RESOURCE_MAP.md
+│   ├── DATABRICKS_BICEP_HANDOFF.md
 │   ├── AZURE_PORTAL_SETUP.md
 │   ├── FAILURE_DRILLS.md
 │   ├── COST_CLEANUP.md
@@ -124,8 +137,8 @@ Install:
 - Poetry 2.x.
 - VS Code (optional but recommended).
 - Git (optional).
-- Terraform 1.8+ only if you want IaC deployment.
-- Azure CLI only if you want CLI/Terraform authentication. The Python POC can use browser authentication without Azure CLI.
+- Azure CLI with Bicep support (`az bicep version`) for infrastructure deployment.
+- Azure CLI is required for the Bicep deployment scripts. The local-only Python smoke test can still run without Azure.
 - ODBC Driver 18 for SQL Server only if using the optional Azure SQL loader.
 
 Verify in a new PowerShell/CMD window:
@@ -133,31 +146,42 @@ Verify in a new PowerShell/CMD window:
 ```powershell
 py -3.12 --version
 poetry --version
-terraform version
+az --version
+az bicep version
 ```
 
-If `az` is unavailable, that is not a blocker for the Python steps. See `docs/AZURE_PORTAL_SETUP.md` and set `AZURE_AUTH_MODE=browser`.
+If `az` is unavailable, local Python steps still work, but Bicep deployment requires Azure CLI. See `docs/BICEP_DEPLOYMENT_GUIDE.md`.
 
 ---
 
-## Step 1 — Create the Poetry virtual environment
+## Step 1 — Use the one-click Poetry bootstrap
 
-From the project root:
+This project includes a ready-made Python toolchain setup under `python_toolchain_one_click`.
+
+### Windows
 
 ```powershell
-poetry env use 3.12
-poetry install
-poetry env info
-poetry run python --version
+cd .\python_toolchain_one_click\windows
+./setup_venv_poery.bat
 ```
+
+### macOS / Linux
+
+```bash
+cd ./python_toolchain_one_click/unix
+bash ./setup_venv_poery.sh
+```
+
+The script verifies Python 3.12 and Poetry, configures Poetry for an in-project `.venv`, runs `poetry install`, and executes the project verification/test checks. This is the recommended initial setup for this POC and replaces the manual `python -m venv` workflow.
 
 Expected:
 
 ```text
 Python 3.12.x
+Bootstrap completed.
 ```
 
-### How to activate the Poetry environment
+### How to run commands without activating the environment
 
 You do **not** need activation if you use `poetry run ...`.
 
@@ -274,60 +298,96 @@ Get-Content output\gold\gold_summary.json
 
 ---
 
-# PART B — Create/reuse Azure resources
+# PART B — Deploy Azure resources with Bicep
 
-Read **`docs/AZURE_PORTAL_SETUP.md`** and create/reuse only what you need.
+The primary IaC path is now **Azure Bicep**. Read `docs/BICEP_DEPLOYMENT_GUIDE.md` before deployment.
+For the shortest Windows command sequence, also see `docs/BICEP_QUICKSTART_WINDOWS.md`.
 
-Recommended minimal capstone resources:
+The beginner Bicep profile creates the integration core: Resource Group, ADLS Gen2, Event Hubs, ADF with a raw-to-bronze pipeline, Azure AI Search, Document Intelligence, Microsoft Foundry resource/project, Key Vault, Log Analytics and Application Insights. Optional Bicep modules are included for Databricks, Azure SQL, Function App, Azure ML, Synapse and Foundry model deployments.
 
-- ADLS Gen2.
-- Event Hubs namespace + `shipment-events`.
-- Existing Databricks workspace from POC-02.
-- One serving layer: Azure SQL, Synapse, or Fabric.
-- Document Intelligence.
-- Azure AI Search.
-- Microsoft Foundry project with a chat deployment.
-- Azure OpenAI-compatible embeddings deployment.
-- Key Vault + Log Analytics/Application Insights if not already available.
-
-Do not create every expensive service again if an earlier POC resource is still usable.
-
----
-
-# PART C — Terraform option
-
-The default Terraform deploys a small integration core and keeps Databricks disabled.
+First login and select the subscription:
 
 ```powershell
-cd infra\terraform
-Copy-Item terraform.tfvars.example terraform.tfvars
-notepad terraform.tfvars
+az login
+az account list -o table
+az account set --subscription "<YOUR-SUBSCRIPTION-ID>"
+az account show --query "{Subscription:name,SubscriptionId:id,TenantId:tenantId}" -o table
 ```
 
-Set your subscription id. Then:
+There is **no `subscription_id` variable prompt**. Bicep uses the active Azure CLI subscription.
+
+This project uses `.bicepparam` files with a `using` declaration. With current Azure CLI/Bicep, pass the `.bicepparam` file through `--parameters`; **do not combine `--template-file main.bicep` with that `.bicepparam` file**.
+
+Go to the Bicep folder:
 
 ```powershell
-terraform fmt -recursive
-terraform init
-terraform validate
-terraform plan -out poc08.tfplan
-terraform apply poc08.tfplan
-terraform output
+cd infra\bicep
 ```
 
-Copy Terraform outputs into root `.env`.
+Build/validate the template:
 
-Return to project root:
+```powershell
+az bicep upgrade
+az bicep build --file main.bicep
+.\register_providers.ps1
+```
+
+## Recommended beginner deployment
+
+```powershell
+.\deploy_bicep.ps1 -Profile beginner
+```
+
+The script runs Bicep build, Azure validation, `what-if`, deployment, saves outputs, and automatically updates the root `.env`.
+
+Manual equivalent:
+
+```powershell
+az deployment sub validate `
+  --location eastus `
+  --parameters main.bicepparam `
+  --no-prompt true `
+  --name poc08-validate
+
+az deployment sub what-if `
+  --location eastus `
+  --parameters main.bicepparam `
+  --no-prompt true `
+  --name poc08-whatif
+
+az deployment sub create `
+  --location eastus `
+  --parameters main.bicepparam `
+  --no-prompt true `
+  --name poc08-beginner
+```
+
+Show outputs:
+
+```powershell
+az deployment sub show --name poc08-beginner --query properties.outputs -o table
+```
+
+Configure `.env` from outputs/keys if you ran the manual commands:
+
+```powershell
+.\configure_env_from_deployment.ps1 -DeploymentName poc08-beginner
+```
+
+Return to root and deploy/test the synthetic data:
 
 ```powershell
 cd ..\..
+poetry install
+poetry run python -m scripts.smoke_test
+.\infra\bicep\run_after_bicep.ps1 -DeploymentName poc08-beginner
 ```
 
-If you cannot use Azure CLI for Terraform authentication yet, create resources manually in the portal first and run Terraform later as a separate IaC exercise.
+For model deployment or the full optional lab, see `docs/BICEP_DEPLOYMENT_GUIDE.md`.
 
 ---
 
-# PART D — Configure `.env` and verify each service separately
+# PART C — Configure `.env` and verify each service separately
 
 ## Step 6 — ADLS configuration
 
@@ -359,17 +419,23 @@ Verify in Azure portal:
 
 ---
 
-## Step 7 — ADF batch path (optional but recommended for final architecture story)
+## Step 7 — ADF batch path
 
-If you already created ADF in POC-01, reuse it. Follow `ingestion/adf/README.md` to create `pl_ingest_orders_to_adls` or show your existing Copy pipeline.
+The beginner Bicep profile already creates Azure Data Factory, a managed-identity ADLS linked service, raw/bronze datasets, and the `pl_orders_raw_to_bronze` Copy pipeline. After `upload_orders.py` places the CSV under `raw/orders/`, trigger the Bicep-created pipeline either through `run_after_bicep.ps1` or manually with Azure CLI.
 
-**Success condition:** a manually triggered ADF run is green and a new file appears under `raw/orders/`.
+```powershell
+$deployment = Get-Content .\infra\bicep\last-deployment.txt
+$rg = az deployment sub show --name $deployment --query "properties.outputs.resourceGroupName.value" -o tsv
+$adf = az deployment sub show --name $deployment --query "properties.outputs.dataFactoryName.value" -o tsv
+$pipeline = az deployment sub show --name $deployment --query "properties.outputs.dataFactoryPipelineName.value" -o tsv
+az datafactory pipeline create-run -g $rg --factory-name $adf --name $pipeline
+```
 
-For a five-minute demo, either ADF or the Python uploader can be the live run; explain that ADF is the orchestration pattern.
+**Success condition:** the ADF run is green and `datalake/bronze/orders/orders_001.csv` exists.
 
 ---
 
-# PART E — Databricks Medallion
+# PART D — Databricks Medallion
 
 ## Step 8 — Upload notebooks
 
@@ -403,7 +469,7 @@ Terminate compute after the test.
 
 ---
 
-# PART F — Event Hubs
+# PART E — Event Hubs
 
 ## Step 9 — Configure Event Hubs
 
@@ -457,7 +523,7 @@ For a production-like path, Event Hubs Capture, Stream Analytics, Functions or D
 
 ---
 
-# PART G — Serving layer
+# PART F — Serving layer
 
 Choose one minimal serving path.
 
@@ -501,7 +567,7 @@ Follow `serving/fabric/README.md` and expose Gold through OneLake/Lakehouse/Ware
 
 ---
 
-# PART H — Document Intelligence
+# PART G — Document Intelligence
 
 ## Step 12 — Configure
 
@@ -535,7 +601,7 @@ Verify that invoice number/vendor/total are extracted reasonably. The exact fiel
 
 ---
 
-# PART I — Prepare Azure AI Search + embeddings
+# PART H — Prepare Azure AI Search + embeddings
 
 ## Step 13 — Prepare searchable documents
 
@@ -622,7 +688,7 @@ Expected source: `output/gold/gold_summary.json`.
 
 ---
 
-# PART J — Foundry grounded RAG
+# PART I — Foundry grounded RAG
 
 ## Step 18 — Configure Foundry project
 
@@ -657,7 +723,7 @@ Expected: unsupported/insufficient context rather than an invented policy.
 
 ---
 
-# PART K — Data + AI Assistant / agent tests
+# PART J — Data + AI Assistant / agent tests
 
 The safest capstone agent is application-owned and read-only. It receives only two tools: knowledge retrieval and Gold metric lookup. No write/delete tool is exposed.
 
@@ -691,7 +757,7 @@ poetry run python -m ai.agent.foundry_agent_runner "What is the return policy?"
 
 ---
 
-# PART L — Optional POC-07 MLflow scoring
+# PART K — Optional POC-07 MLflow scoring
 
 The capstone file marks prediction exposure as optional.
 
@@ -717,7 +783,7 @@ Then call `score_delay_risk(...)` from a read-only agent tool or notebook. Do no
 
 ---
 
-# PART M — Governance and security
+# PART L — Governance and security
 
 Review:
 
@@ -738,7 +804,7 @@ For the final demo, be able to state:
 
 ---
 
-# PART N — Monitoring
+# PART M — Monitoring
 
 Local status:
 
@@ -762,7 +828,7 @@ Use `monitoring/checklist.md` to capture your screenshots.
 
 ---
 
-# PART O — Failure drill
+# PART N — Failure drill
 
 Safest drill:
 
@@ -787,7 +853,7 @@ Other drills are documented in `docs/FAILURE_DRILLS.md`.
 
 ---
 
-# PART P — CI/CD
+# PART O — CI/CD
 
 The sanitized Azure DevOps pipeline is in:
 
@@ -800,16 +866,16 @@ It validates:
 - Poetry/Python project;
 - Ruff;
 - unit tests;
-- Terraform formatting/validation;
-- Bicep build.
+- Bicep compilation;
+- unit tests and Python linting.
 
-Deployment is blocked unless `ENABLE_DEPLOY=true`, and the YAML contains no credential values.
+Deployment is blocked unless `ENABLE_DEPLOY=true`. The YAML deploys Bicep through an Azure DevOps service connection and contains no credential values.
 
 Before using it, create an Azure DevOps service connection and replace the placeholder name `POC08-SERVICE-CONNECTION` with your connection name.
 
 ---
 
-# PART Q — Final verification checklist
+# PART P — Final verification checklist
 
 Run these in order from a clean clone/unzip:
 
@@ -824,37 +890,45 @@ poetry run ruff check .
 poetry run pytest
 poetry run python -m scripts.smoke_test
 
-# 3. ADLS
+# 3. Bicep infrastructure (run from project root)
+cd infra\bicep
+az bicep build --file main.bicep
+.\deploy_bicep.ps1 -Profile beginner
+cd ..\..
+$deployment = Get-Content .\infra\bicep\last-deployment.txt
+
+# 4. ADLS + ADF
 poetry run python -m scripts.verify_config --profile adls
 poetry run python -m ingestion.batch.upload_orders
+.\infra\bicep\run_after_bicep.ps1 -DeploymentName $deployment -SkipEvents -SkipDocuments -SkipSearch -SkipSql -SkipFunctionCode
 
-# 4. Event Hubs
+# 5. Event Hubs
 poetry run python -m scripts.verify_config --profile events
 poetry run python -m ingestion.events.send_events
 # receiver in separate terminal if desired
 
-# 5. Document Intelligence
+# 6. Document Intelligence
 poetry run python -m scripts.verify_config --profile documents
 poetry run python -m ai.document_intelligence.extract_invoice
 
-# 6. Search
+# 7. Search
 poetry run python -m ai.rag.prepare_documents
 poetry run python -m ai.rag.create_index
 poetry run python -m ai.rag.index_documents
 poetry run python -m ai.rag.query_search "When is a shipment considered delayed?"
 
-# 7. RAG
+# 8. RAG
 poetry run python -m ai.rag.rag_answer "When is a shipment considered delayed?"
 
-# 8. Agent
+# 9. Agent
 poetry run python -m ai.agent.assistant --mode policy "What is the return window?"
 poetry run python -m ai.agent.assistant --mode metric "What is total revenue?"
 poetry run python -m ai.agent.assistant --mode mixed "What is total revenue and what is the delay policy?"
 
-# 9. Failure drill
+# 10. Failure drill
 poetry run python -m ingestion.events.send_malformed_event
 
-# 10. Monitoring local snapshot
+# 11. Monitoring local snapshot
 poetry run python -m monitoring.health_check
 ```
 
@@ -875,18 +949,23 @@ Also verify in Azure UI:
 
 ---
 
-# PART R — Cost cleanup
+# PART Q — Cost cleanup
 
 Read `docs/COST_CLEANUP.md`.
 
-If Terraform created the dedicated lab resources:
+If Bicep created the dedicated lab resource group:
 
 ```powershell
-cd infra\terraform
-terraform destroy
+.\infra\bicep\destroy_bicep.ps1 -ResourceGroupName rg-poc08-capstone
 ```
 
-Then verify the resource group and Cost Management before finishing the POC.
+Type `DELETE` when prompted. Then verify:
+
+```powershell
+az group exists --name rg-poc08-capstone
+```
+
+Expected after deletion completes: `false`. Also check Cost Management before finishing the POC.
 
 ---
 

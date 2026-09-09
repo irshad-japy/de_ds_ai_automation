@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "01-secure-batch-adf-adls-sql"
+version = "0.1.0"
+description = "POC-01 Secure Batch ADF ADLS SQL"
+authors = ["POC Learner <learner@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+azure-identity = ">=1.17,<2"
+azure-storage-file-datalake = ">=12.16,<13"
+python-dotenv = ">=1.0,<2"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

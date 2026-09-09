@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
 
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
+
+from common.config import env
 
 
 def _value(field: dict | None):
@@ -22,8 +23,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", default="data/synthetic/invoice_001.pdf")
     args = parser.parse_args()
-    endpoint = os.getenv("DOCUMENTINTELLIGENCE_ENDPOINT", "").strip()
-    key = os.getenv("DOCUMENTINTELLIGENCE_API_KEY", "").strip()
+    endpoint = env("DOCUMENTINTELLIGENCE_ENDPOINT")
+    key = env("DOCUMENTINTELLIGENCE_API_KEY")
     if not endpoint or not key:
         raise RuntimeError("Set DOCUMENTINTELLIGENCE_ENDPOINT and DOCUMENTINTELLIGENCE_API_KEY")
 

@@ -156,22 +156,27 @@ az account list -o table
 az account set --subscription "<YOUR_SUBSCRIPTION_NAME_OR_ID>"
 ```
 
-## Step A3 - Create Python virtual environment
+## Step A3 - Use the one-click Python setup
 
-From this project folder:
+This project includes a ready-made setup script in the `python_toolchain_one_click` folder. Use it instead of manually creating a virtual environment.
+
+### Windows
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+cd .\python_toolchain_one_click\windows
+./setup_venv_poery.bat
 ```
 
-If PowerShell blocks activation, use Command Prompt:
+### macOS / Linux
 
-```cmd
-.venv\Scripts\activate.bat
+```bash
+cd ./python_toolchain_one_click/unix
+bash ./setup_venv_poery.sh
 ```
+
+The script will configure Poetry for in-project virtual environments, select Python 3.12, install dependencies, and run the local validation checks. This is the recommended setup for the POC.
+
+> Do not manually run `python -m venv .venv` or `pip install -r requirements.txt` unless you are intentionally troubleshooting a custom setup.
 
 ## Step A4 - Run local unit tests (no Azure required)
 
